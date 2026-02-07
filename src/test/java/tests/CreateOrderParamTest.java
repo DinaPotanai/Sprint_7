@@ -9,24 +9,22 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import com.google.gson.Gson;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.is;
+import static java.net.HttpURLConnection.*;
 import static org.hamcrest.Matchers.notNullValue;
 
 @RunWith(Parameterized.class)
-public class CreateOrderTest {
+public class CreateOrderParamTest {
 
     private final List<String> colors;
     private final OrderApi orderApi = new OrderApi();
     private String track;
 
-    public CreateOrderTest(List<String> colors) {
+    public CreateOrderParamTest(List<String> colors) {
         this.colors = colors;
     }
 
@@ -42,12 +40,12 @@ public class CreateOrderTest {
 
     @Test
     @DisplayName("Создание заказа")
-    @Description("Проверка, что можно создать заказ ")
+    @Description("Проверка, что можно создать заказы с разными цветами самоката")
     public void createOrderTest() {
         Order order = new Order("Леонардо",
                 "Дикаприо",
                 "Голливуд",
-                "Щукинская",
+                "4",
                 "89160000000",
                 1,
                 "05.02.2026",
@@ -56,29 +54,17 @@ public class CreateOrderTest {
         Response response = orderApi.createOrder(order);
         response.then().log().all()
                 .assertThat()
-                .statusCode(201)
+                .statusCode(HTTP_CREATED)
                 .body("track", notNullValue());
-
-    }
-
-    @Test
-    @DisplayName("Список заказов")
-    @Description("Проверка, что в тело ответа возвращается список заказов")
-    public void getOrdersTest() {
-        Response response = orderApi.getOrders();
-        response.then()
-                .assertThat()
-                .statusCode(200)
-                .body("orders", is(notNullValue()));
     }
 
     @After
     public void cleanUpTest() {
         if (track != null) {
             Response deleteResponse = orderApi.deleteOrder(track);
-            deleteResponse.then()
+            deleteResponse.then().log().all()
                     .assertThat()
-                    .statusCode(200);
+                    .statusCode(HTTP_OK);
         }
     }
 }
