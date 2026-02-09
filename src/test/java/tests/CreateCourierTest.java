@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import static java.net.HttpURLConnection.*;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 public class CreateCourierTest {
 
@@ -27,16 +28,34 @@ public class CreateCourierTest {
                 .assertThat()
                 .statusCode(HTTP_CREATED)
                 .body("ok", equalTo(true));
+        Response loginResponse = courierApi.loginCourier(courier);
+        loginResponse.then().log().all()
+                .assertThat()
+                .statusCode(HTTP_OK)
+                .body("id", notNullValue());
+        courierId = loginResponse.then().extract().path("id");
     }
 
     @Test
     @DisplayName("Создание одинаковых курьеров невозможно")
     @Description("Проверка, что нельзя создать двух курьеров с одинаковым логином")
     public void identicalCourierCreatedTest() {
-        String login = "DuplicateUser";
-        Courier courier= new Courier(login, "123", "Микеланджело");
+        String login = "DuplicateCourierNew";
+        Courier courier = new Courier(login, "123", "Микеланджело");
         Response response = courierApi.createCourier(courier);
         response.then().log().all()
+                .assertThat()
+                .statusCode(HTTP_CREATED)
+                .body("ok", equalTo(true));
+        Response loginResponse = courierApi.loginCourier(courier);
+        loginResponse.then().log().all()
+                .assertThat()
+                .statusCode(HTTP_OK)
+                .body("id", notNullValue());
+        courierId = loginResponse.then().extract().path("id");
+        Courier courierDuplicate = new Courier(login, "678", "Антонио");
+        Response responseDuplicate = courierApi.createCourier(courierDuplicate);
+        responseDuplicate.then().log().all()
                 .assertThat()
                 .statusCode(HTTP_CONFLICT)
                 .body("message", equalTo("Этот логин уже используется"));
